@@ -25,6 +25,7 @@ from stario.html import (
     Main,
     Meta,
     P,
+    Section,
     Script,
     Source,
     Span,
@@ -39,30 +40,37 @@ def index_view():
     return Html(
         {"lang": "en"},
         Head(
-            # Meta({'charset': "UTF-8"}),
-            # Meta(
-            #     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
-            # ),
-            # Title("leg.ovh"),
-            # Link({
-            #     'rel': "icon",
-            #     'href': f"/static/{asset('img/avatar.avif')}"
-            # }),
-            # Link({
-            #     'rel': "stylesheet",
-            #     'href': f"/static/{asset('css/index.css')}"
-            # }),
-            # Script({
-            #     'type': "module",
-            #     'src': f"/static/{asset('js/datastar.js')}"
-            # }),
-            # Script({
-            #     'type': "module",
-            #     'src': f"/static/{asset('js/index.js')}"
-            # }),
+            Meta({'charset': "UTF-8"}),
+            Meta(
+                {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+            ),
+            Title("hello there"),
+            Link({
+                'rel': "icon",
+                'href': f"/static/{asset('img/avatar.avif')}"
+            }),
+            Link({
+                'rel': "stylesheet",
+                'href': f"/static/{asset('css/index.css')}"
+            }),
+            Script({
+                'type': "module",
+                'src': f"/static/{asset('js/datastar.js')}"
+            }),
+            Script({
+                'type': "module",
+                'src': f"/static/{asset('js/index.js')}"
+            }),
         ),
         Body(
-            Main()
+            {'class': ["gf gc"]},
+            Main(
+                {'class': ["gc gt-xxl"]},
+                H1("Hello there!"),
+                Section(
+                    H2("Stario release Waiting room")
+                )
+            )
         )
     )
 
@@ -80,6 +88,7 @@ async def main():
 
         app.get("/", index)
 
+        app.assets("/static", Path(__file__).parent / "static")
         await app.serve(unix_socket="/run/legovh/tmp.sock")
         # await app.serve()
 
