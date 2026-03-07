@@ -48,7 +48,7 @@ fake = Faker()
 
 # VIEWS
 
-def index_init():
+def index_init(user_id):
     return Html(
         {"lang": "en"},
         Head(
@@ -70,12 +70,34 @@ def index_init():
                 # 'src': f"/static/{asset('js/datastar.js')}"
                 'src': "https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.8/bundles/datastar.js"
             }),
+            Script({
+                'type': "module",
+                'src': f"/static/{asset('js/index.js')}",
+            }),
         ),
-        Body(data.init(at.get("/index_cqrs")))
+        Body(
+            {'class': ["gf gc"]},
+            data.init(at.get("/index_cqrs")),
+            data.on('pointermove', "$data = mister(evt)"),
+            data.on_interval(at.post("/mouse", request_cancellation="disabled"), duration="30ms"),
+            # data.on('click', at.post("/mouse", request_cancellation="disabled")),
+            Main(
+                {'class': ["gc gt-xxl"]},
+                H1("Get in!"),
+                Div({'class': "gm-xl"}),
+                Section(
+                    H2("Stario 2.3.0 released!!!"),
+                    P({'class': "gt-s"}, "We're getting Comment tags wouhouuuu"),
+                    P({'class': "gt-s"}, "Your name is ", user_id),
+                ),
+            ),
+            Div({'id': "mousetrap"})
+        )
     )
 
-def index_view(user_id):
-    the_mouse_trap = Div(
+def index_view():
+    return Div(
+        {'id': "mousetrap"},
         *[
             Img({
                 'src': f"/static/{asset('img/smol.png')}",
@@ -84,30 +106,6 @@ def index_view(user_id):
             }) 
             for user_id, pos in database.items()
         ]
-    )
-    return Body(
-        {'class': ["gf gc"]},
-        data.on('pointermove', "$data = mister(evt)"),
-        # data.on_interval(at.post("/mouse"), duration="10s"),
-        data.on('click', at.post("/mouse")),
-        # so adam would have used debounced movement
-        Script({
-            'type': "module",
-            'src': f"/static/{asset('js/index.js')}",
-        }),
-        Main(
-            {'class': ["gc gt-xxl"]},
-            H1("Get in!"),
-            Div({'class': "gm-xl"}),
-            Section(
-                H2("Stario 2.3.0 released!!!"),
-                P({'class': "gt-s"}, "We're getting Comment tags wouhouuuu"),
-                P({'class': "gt-s"}, "Your name is ", user_id),
-                data.ignore_morph()
-            ),
-            # Div(data.json_signals())
-        ),
-        the_mouse_trap
     )
 
 # HANDLERS
@@ -118,15 +116,13 @@ async def index(c: Context, w: Writer):
     user_id = fake.name()
     database[user_id] = [20, 20]
     w.cookie("user_id", user_id, httponly=True, secure=True)
-    w.html(index_init())
+    w.html(index_init(user_id))
 
 async def index_cqrs(c: Context, w: Writer):
-    user_id = c.req.cookies.get('user_id')
-    w.patch(index_view(user_id))
     async for _ in w.alive(relay.subscribe("refresh")):
-        c("relay msg received")
-        c("the whole db", {'db': database})
-        w.patch(index_view(user_id))
+        # c("relay msg received")
+        # c("the whole db", {'db': database})
+        w.patch(index_view())
 
 async def mouse(c: Context, w: Writer):
     # careful, data keeps coming when window inactive
@@ -141,16 +137,16 @@ async def mouse(c: Context, w: Writer):
 
 # APP
 
-async def refresh(refresh_rate=10):
+async def refresh(refresh_rate=0.03):
     while True:
         relay.publish("refresh", "")
         await asyncio.sleep(refresh_rate)
 
 async def main():
-    # database = {} # poor man's reset
+    database = {} # poor man's reset
     asyncio.create_task(refresh())
-    with RichTracer() as tracer:
-    # with JsonTracer() as tracer:
+    # with RichTracer() as tracer:
+    with JsonTracer() as tracer:
         app = Stario(tracer)
 
         app.get("/", index)
