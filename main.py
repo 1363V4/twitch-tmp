@@ -70,15 +70,11 @@ def index_init():
                 # 'src': f"/static/{asset('js/datastar.js')}"
                 'src': "https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.8/bundles/datastar.js"
             }),
-            Script({
-                'type': "module",
-                'src': f"/static/{asset('js/index.js')}",
-            }),
         ),
         Body(data.init(at.get("/index_cqrs")))
     )
 
-def index_view():
+def index_view(user_id):
     the_mouse_trap = Div(
         *[
             Img({
@@ -92,18 +88,24 @@ def index_view():
     return Body(
         {'class': ["gf gc"]},
         data.on('pointermove', "$data = mister(evt)"),
-        data.on_interval(at.post("/mouse"), duration="5s"),
+        # data.on_interval(at.post("/mouse"), duration="10s"),
+        data.on('click', at.post("/mouse")),
+        # so adam would have used debounced movement
+        Script({
+            'type': "module",
+            'src': f"/static/{asset('js/index.js')}",
+        }),
         Main(
             {'class': ["gc gt-xxl"]},
-            # instead of pointer, interval on client for now
-            # data.on('pointermove', at.post("/mouse"), throttle="500ms"),
             H1("Get in!"),
             Div({'class': "gm-xl"}),
             Section(
-                H2("Stario release Waiting room"),
-                P({'class': "gt-s"}, "We're getting Comment tags wouhouuuu")
+                H2("Stario 2.3.0 released!!!"),
+                P({'class': "gt-s"}, "We're getting Comment tags wouhouuuu"),
+                P({'class': "gt-s"}, "Your name is ", user_id),
+                data.ignore_morph()
             ),
-            Div(data.json_signals())
+            # Div(data.json_signals())
         ),
         the_mouse_trap
     )
@@ -114,25 +116,24 @@ async def index(c: Context, w: Writer):
     # user_id = uuid4()
     # bad boy, no user_id until you're grown up
     user_id = fake.name()
-    database[user_id] = [0, 0]
+    database[user_id] = [20, 20]
     w.cookie("user_id", user_id, httponly=True, secure=True)
     w.html(index_init())
 
 async def index_cqrs(c: Context, w: Writer):
-    w.patch(index_view())
+    user_id = c.req.cookies.get('user_id')
+    w.patch(index_view(user_id))
     async for _ in w.alive(relay.subscribe("refresh")):
         c("relay msg received")
-        c("mouse", {'ms': str(index_view())})
-        w.patch(index_view())
+        c("the whole db", {'db': database})
+        w.patch(index_view(user_id))
 
 async def mouse(c: Context, w: Writer):
     # careful, data keeps coming when window inactive
     signals = await c.signals()
     data = signals.get('data')
-    c("the whole db", {'db': database})
     if data:
         user_id = c.req.cookies.get('user_id')
-        # c("debug", {'x': str(user_id)})
         if user_id and user_id in database:
             dx, dy = data
             database[user_id] = [dx, dy]
@@ -140,7 +141,7 @@ async def mouse(c: Context, w: Writer):
 
 # APP
 
-async def refresh(refresh_rate=1):
+async def refresh(refresh_rate=10):
     while True:
         relay.publish("refresh", "")
         await asyncio.sleep(refresh_rate)

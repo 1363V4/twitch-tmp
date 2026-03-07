@@ -9,14 +9,6 @@
 }
 
 @font-face {
-    font-family: 'slkscrb';
-    font-weight: bold;
-    font-display: swap;
-    /* swap also exists */
-    src: url('/static/fonts/slkscrb.ttf');
-}
-
-@font-face {
     font-family: 'firacode';
     font-weight: normal;
     src: url('/static/fonts/FiraCode.ttf');

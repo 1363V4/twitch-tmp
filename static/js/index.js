@@ -1,15 +1,13 @@
-// import { splitText, stagger, waapi } from '/static/js/anime.js';
+import { splitText, stagger, waapi } from '/static/js/anime.js';
 
-// const { words, chars } = splitText("h2");
+const { words, chars } = splitText("h2");
 
-// hey chat what color am i missing
-
-// waapi.animate(words, {
-	// color: ['red', 'orange', 'yellow', 'blue', 'magenta', 'purple'],
-	// duration: 2000,
-	// delay: stagger(500),
-	// loop: true,
-// });
+waapi.animate(words, {
+	color: ['red', 'orange', 'yellow', 'blue', 'magenta', 'purple'],
+	duration: 2000,
+	delay: stagger(500),
+	loop: true,
+});
 
 window.mister = function (evt) {
 	let dx = (evt.x / document.documentElement.scrollWidth) * 100;
