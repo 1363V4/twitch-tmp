@@ -25,29 +25,44 @@
 	--shadow: #ffffff80;
 	--orange: #f3a235;
 	--yellow: #f2ca29;
-    scrollbar-color: var(--yellow) var(--black);
-	scrollbar-width: thin;
-	&:has(body[light]) {
-		--black: #e3e3e3;
-    	--shadow: #00000080;
-		--orange: #0c5dca;
-		--yellow: #0d35d6;
-	}
+	--m: 1.1rem;
 }
 
 body {
     background: var(--black);
     font-family: 'firacode', system-ui;
     font-family: 'slkscr', system-ui;
-    cursor: url("/static/img/smol.png"), auto;
+    /* cursor: url("/static/img/smol.png"), auto; */
+    cursor: none;
+	overflow: hidden;
 }
 
 main {
 	color: var(--yellow);
     text-align: center;
+	word-break: break-all;
+	user-select: none;
+}
+
+span {
+	color: var(--orange);
 }
 
 .cursor_ai {
 	position: fixed;
-	transform: translate(-50%, -50%);
+	color: white;
+	/* transform: translate(-50%, -50%); */
+	/* not needed */
+}
+
+#fps {
+	position: fixed;
+	right: 2ch;
+	top: 2ch;
+}
+
+#server {
+	position: fixed;
+	left: 2ch;
+	bottom: 1ch;
 }

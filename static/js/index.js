@@ -1,15 +1,22 @@
 import { splitText, stagger, waapi } from '/static/js/anime.js';
 
-const { words, chars } = splitText("h2");
+// console.log(words, chars);
+// don't forget to say chars:true!
+// need to delay this
 
-waapi.animate(words, {
-	color: ['red', 'orange', 'yellow', 'blue', 'magenta', 'purple'],
-	duration: 2000,
-	delay: stagger(500),
-	loop: true,
-});
+window.fun = function () {
+	const { words, chars } = splitText("h1", {chars: true});
 
-window.mister = function (evt) {
+	waapi.animate(chars, {
+		color: ['red', 'orange', 'yellow', 'blue', 'magenta', 'purple'],
+		duration: 2000,
+		delay: stagger(500),
+		loop: true,
+	});
+};
+
+
+window.fe_work = function (evt) {
 	let dx = (evt.x / document.documentElement.scrollWidth) * 100;
 	let dy = (evt.y / document.documentElement.scrollHeight) * 100;
 	dx = Math.round(dx);
