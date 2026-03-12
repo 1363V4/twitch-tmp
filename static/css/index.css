@@ -21,10 +21,10 @@
 }
 
 :root {
-	--black: #1c1c1c;
+	--black: #000;
 	--shadow: #ffffff80;
-	--orange: #f3a235;
-	--yellow: #f2ca29;
+	--orange: #d6be9e;
+	--yellow: #51a1d2;
 	--m: 1.1rem;
 }
 
@@ -42,6 +42,10 @@ main {
     text-align: center;
 	word-break: break-all;
 	user-select: none;
+}
+
+h1 {
+	text-shadow: -2px 2px var(--shadow);
 }
 
 span {
@@ -65,4 +69,8 @@ span {
 	position: fixed;
 	left: 2ch;
 	bottom: 1ch;
+}
+
+@view-transition {
+    navigation: auto;
 }
