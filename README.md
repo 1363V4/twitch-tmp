@@ -1,4 +1,4 @@
-
+# VIDEO
 
 
 
@@ -8,19 +8,21 @@
 
 # TODO
 
+why do you render every time bro...
 name (we'll see the style later) DONE
 redo fat morph DONE
 > compression seems wrong?
 animate first trigger > DONE
 psutils (uv add) > DONE
-selenium 100 users simulation > LOL 4 wtf
+selenium 100 users simulation > LOL 10 is enough
+**you are here**
 maybe video here
-fps > WC?
+**10 pers max in an array**
 multiple cursors
-draggable letters / sandbox
-100 pers max in an array
+fps > WC?
 
-how does sse work with curl (no JS but -N flag)
+draggable letters / sandbox
+
 
 # NOTES
 
@@ -37,3 +39,5 @@ and displayed better error
 > stario 3
 
 i also gave too many user_id on reco, should have checked first
+
+how does sse work with curl (no JS but -N flag)

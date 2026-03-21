@@ -1,76 +1,108 @@
-@import url('gold.css');
+@import url("gold.css");
 
 @font-face {
-    font-family: 'slkscr';
+    font-family: "slkscr";
     font-weight: normal;
     font-display: fallback;
     /* on really bad connection, give up the font */
-    src: url('/static/fonts/slkscr.ttf');
+    src: url("/static/fonts/slkscr.ttf");
 }
 
 @font-face {
-    font-family: 'firacode';
+    font-family: "firacode";
     font-weight: normal;
-    src: url('/static/fonts/FiraCode.ttf');
+    src: url("/static/fonts/FiraCode.ttf");
 }
 
 @font-face {
-    font-family: 'lusitana';
+    font-family: "lusitana";
     font-weight: normal;
-    src: url('/static/fonts/Lusitana.ttf');
+    src: url("/static/fonts/Lusitana.ttf");
 }
 
 :root {
-	--black: #000;
-	--shadow: #ffffff80;
-	--orange: #d6be9e;
-	--yellow: #51a1d2;
-	--m: 1.1rem;
+    --black: #000;
+    --shadow: #ffffff80;
+    --orange: #d6be9e;
+    --yellow: #51a1d2;
+    /*--black: #43523d;
+    --shadow: #ffffff80;
+    --orange: #c7f0d8;
+    --yellow: #c7f0d8;*/
+    --m: 1.1rem;
 }
 
 body {
     background: var(--black);
-    font-family: 'firacode', system-ui;
-    font-family: 'slkscr', system-ui;
+    font-family: "firacode", system-ui;
+    font-family: "slkscr", system-ui;
     /* cursor: url("/static/img/smol.png"), auto; */
     cursor: none;
-	overflow: hidden;
+    overflow: hidden;
 }
 
 main {
-	color: var(--yellow);
+    color: var(--yellow);
     text-align: center;
-	word-break: break-all;
-	user-select: none;
+    word-break: break-all;
+    user-select: none;
 }
 
 h1 {
-	text-shadow: -2px 2px var(--shadow);
+    text-shadow: -2px 2px var(--shadow);
 }
 
 span {
-	color: var(--orange);
+    color: var(--orange);
 }
 
 .cursor_ai {
-	position: fixed;
-	color: white;
-	/* transform: translate(-50%, -50%); */
-	/* not needed */
+    position: fixed;
+    left: 0;
+    top: 0;
+    color: white;
+    /*we sync with refresh rate*/
+    /*ease out is best*/
+    /*transition: translate 0.05s ease-out;*/
 }
 
 #fps {
-	position: fixed;
-	right: 2ch;
-	top: 2ch;
+    position: fixed;
+    left: 10px;
+    top: 10px;
+}
+
+#wheel {
+    position: fixed;
+    right: 10px;
+    top: 4px;
+    width: 16px;
+    mix-blend-mode: overlay;
+    stroke: var(--orange);
+    &:hover {
+        stroke: var(--orange);
+    }
+    cursor: pointer;
 }
 
 #server {
-	position: fixed;
-	left: 2ch;
-	bottom: 1ch;
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
 }
 
 @view-transition {
     navigation: auto;
+}
+
+input {
+    text-align: center;
+}
+
+.button {
+    border: 1px solid var(--orange);
+    cursor: pointer;
+    &:hover {
+        color: var(--orange);
+    }
 }
