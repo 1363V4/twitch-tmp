@@ -14,8 +14,12 @@ from stario import (
     Writer,
     asset,
     at,
-    data,
+    data, 
 )
+import re
+
+
+
 from stario.html import (
     H1,
     H2,
@@ -53,14 +57,14 @@ NO_PEOPLE = 10
 database_x = array("B", [] * NO_PEOPLE)
 database_y = array("B", [] * NO_PEOPLE)
 database_id = array("B", [] * NO_PEOPLE)
-user_id_to_slot = {}
-free_slots = list(range(NO_PEOPLE))
+dict_of_user_id_to_slot = {}
+port = 2000
 # we gon do some ECS
 
 # okay i lied, i need some other stuff as well
-relay = Relay()  # for the tick
+main_relay = Relay()
 fake = Faker()  # for the debug
-refresh_rate = 0.03
+refresh_rate = 1 / 30
 server_stats = ""
 
 # HTML parts
@@ -94,114 +98,132 @@ fragments["head"] = Head(
 # okay fixed.
 
 
-def index_view(user_id):
-    # if we want to encapsulate
-    # WC_Example = Tag("just-flexin", self_closing=True)
-    # WC_Example()
-    mousetrap = Div(
+def parse_user_id(user_id):
+    # remove spaces and special characters, avoid conflict with html id
+    user_id = re.sub(r"\W+", "", user_id)
+    return user_id
+# HANDLERS
+def build_cursor_div(user_id, pos, main_user_id):
+    return Div(
+        {
+            "class": ["cursor_ai", "gt-s"],
+            "style": f"translate: {pos[0]}vw {pos[1]}vh;" if user_id != main_user_id else None,
+            "data-main-cursor": user_id == main_user_id,
+            "id": parse_user_id(user_id),                    
+        },
+        Img(
+            {
+                "src": "/static/img/smol.png",
+            }
+        ),
+        P(user_id),
+    )
+
+def build_mouse_trap(main_user_id):
+    return Div(
         {"id": "mousetrap"},
-        {"style": f"transition: translate {2 * refresh_rate}s ease-out"},
         *[
-            Div(
-                {
-                    "class": ["cursor_ai", "gt-s"],
-                    "style": f"translate: {pos[0]}vw {pos[1]}vh;",
-                },
-                Img(
-                    {
-                        "src": "/static/img/smol.png",
-                    }
-                ),
-                P(user_id),
-            )
+            build_cursor_div(user_id, pos, main_user_id)
             for user_id, pos in database.items()
         ],
     )
-    return Body(
-        {"class": ["gf gc"]},
-        data.on("pointermove", "$data = fe_work(evt)"),
-        Main(
-            data.on_interval(
-                at.post("/mouse"), duration=f"{int(refresh_rate * 1000)}ms"
-            ),
-            {"class": ["gc gt-xxl"]},
-            H1(
-                "Cursor Party",
-                data.init("fun()"),
-                data.ignore_morph(),
-            ),
-            P({"class": "gt-m"}, "Your name is ", Span(user_id)),
-            # P({"class": "gt-s"}, data.json_signals()),
-            P({"id": "server"}, {"class": "gt-s"}, server_stats),
-            P(
-                {"id": "fps", "class": ["gt-s"]}, "FPS: ", int(1 / refresh_rate)
-            ),  # kind of a lie
-            A(
-                {"href": "/settings"},
-                Img(
-                    {
-                        "id": "wheel",
-                        "src": f"/static/{asset('svg/settings.svg')}",
-                    },
-                ),
-            ),
-            mousetrap,
-        ),
-    )
-
-
-# HANDLERS
 
 
 async def index(c: Context, w: Writer):
     # user_id = uuid4()
     # bad boy, no user_id until you're grown up
-    user_id = c.req.cookies.get("user_id")
-    if not user_id:
-        user_id = fake.name()
-        w.cookie("user_id", user_id, httponly=True, secure=True)
-    # if user_id in db, we here just respawn at 0,0
-    # seems like an acceptable behavior
-    database[user_id] = [0, 0]
+    main_user_id = c.req.cookies.get("user_id")
+    if not main_user_id:
+        main_user_id = fake.name()
+        w.cookie("user_id", main_user_id, httponly=True, secure=False)
+
+    database[main_user_id] = [0, 0]
+   
+    
     return w.html(
         Html(
             {"lang": "en"},
             fragments["head"],
+            data.on("pointermove", "fe_work(evt)"),
             Body(
                 {"class": ["gf gc"]},
-                data.init(at.get("/index_cqrs")),
-            ),
+                { "id": "body" },
+                data.on("pointermove", at.post("/mouse"), throttle=refresh_rate),
+                Main(
+                    {"class": ["gc gt-xxl"]},
+                    H1(
+                        "Cursor Party",
+                        data.ignore_morph(),
+                        # on écoute tous les événements (join, leave, move)
+                        data.init(at.post("/sync")),
+                    ),
+                    P({"class": "gt-m"}, "Your name is ", Span(main_user_id)),
+                    # P({"class": "gt-s"}, data.json_signals()),
+                    P({"id": "server"}, {"class": "gt-s"}, server_stats),
+                    P(
+                        {"id": "fps", "class": ["gt-s"]}, "FPS: ", int(1 / refresh_rate)
+                    ),  # kind of a lie
+                    A(
+                        {"href": "/settings"},
+                        Img(
+                            {
+                                "id": "wheel",
+                                "src": f"/static/{asset('svg/settings.svg')}",
+                            },
+                        ),
+                    ),
+                    build_mouse_trap(main_user_id),
+                )
+            )
         )
     )  # huh? html twice? -> YES SIR.
 
 
-# what i wonder is: if i don't package with w.html, do i still get compression?
-
-
-async def index_cqrs(c: Context, w: Writer):
-    user_id = c.req.cookies.get("user_id")
-    if user_id and user_id not in database:
-        database[user_id] = [0, 0]
-        # okay that was it
-    # here, w.alive() ends when the SSE connection disconnects
-    async for _ in w.alive(relay.subscribe("refresh")):
-        w.patch(index_view(user_id))
-        # debug break
-        # break
-    # maybe that's aggressive... i need to test... yes something wrong
-    if user_id and user_id in database:
-        del database[user_id]
+async def sync(c: Context, w: Writer):
+    main_user_id = c.req.cookies.get("user_id")
+    
+    main_relay.publish("join", main_user_id)
+    try:
+        async for event,value in w.alive(main_relay.subscribe("*")):
+            print("refreshing...",main_user_id, event, value)
+            if (event == "join"):
+                user_id = value
+                if user_id != main_user_id:
+                    print(f"adding {user_id}")
+                    w.patch(build_cursor_div(user_id,[0,0],main_user_id), selector="#mousetrap", mode="append")
+            if (event == "leave"):
+                user_id = value
+                print(f"removing {user_id}")
+                w.remove(f"#{parse_user_id(user_id)}")
+            if event == "move":
+                user_id, dx,dy = value
+                pos = [dx, dy]
+                if (user_id != main_user_id):
+                    print(f"moving {user_id} to {pos}")
+                    w.patch(
+                        build_cursor_div(user_id, pos, main_user_id),selector=f"#{parse_user_id(user_id)}"
+                    )   
+    finally:
+        if main_user_id in database:
+            del database[main_user_id]
+        main_relay.publish("leave", main_user_id)
+        print(f"{main_user_id} disconnected", database)
 
 
 async def mouse(c: Context, w: Writer):
     # careful, data keeps coming when window inactive
     signals = await c.signals()
-    data = signals.get("data")
-    if data:
-        user_id = c.req.cookies.get("user_id")
-        if user_id and user_id in database:
-            dx, dy = data
-            database[user_id] = [dx, dy]
+
+    dx = signals.get("x")
+    dy = signals.get("y")
+    
+    user_id = c.req.cookies.get("user_id")
+
+    if user_id and user_id in database:
+        database[user_id] = [dx, dy]
+
+    main_relay.publish("move", (user_id, dx, dy))
+    
     w.empty()
 
 
@@ -253,15 +275,6 @@ async def code(c, w):
         # and here it says not allowed
 
 
-# LOOPS
-
-
-async def refresh(refresh_rate=refresh_rate):
-    while True:
-        relay.publish("refresh", "")
-        await asyncio.sleep(refresh_rate)
-
-
 async def wassup_psutil():
     global server_stats
     while True:
@@ -284,12 +297,12 @@ async def wassup_psutil():
 
 async def main():
     database.clear()
-    asyncio.create_task(refresh())
     asyncio.create_task(wassup_psutil())
     # with RichTracer() as tracer:
     with JsonTracer() as tracer:
         app = Stario(
             tracer,
+            
             # compression=CompressionConfig(
             #     # min_size=1024,     # Minimum bytes to compress... what?
             #     # zstd_level=4,  # 1-22 (3 default)
@@ -297,14 +310,15 @@ async def main():
             # ),
         )
         app.get("/", index)
-        app.get("/index_cqrs", index_cqrs)
         app.post("/mouse", mouse)
         app.get("/settings", settings)
+        app.post("/sync", sync)
         app.post("/code", code)
 
         app.assets("/static", Path(__file__).parent / "static")
-        await app.serve(unix_socket="/run/legovh/tmp.sock")
-        # await app.serve()
+        # await app.serve(unix_socket="/run/legovh/tmp.sock")
+        await app.serve(port=port)
+        
 
 
 def serve():
