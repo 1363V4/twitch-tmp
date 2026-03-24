@@ -53,7 +53,8 @@ NO_PEOPLE = 10
 database_x = array("B", [] * NO_PEOPLE)
 database_y = array("B", [] * NO_PEOPLE)
 database_id = array("B", [] * NO_PEOPLE)
-dict_of_user_id_to_slot = {}
+user_id_to_slot = {}
+free_slots = list(range(NO_PEOPLE))
 # we gon do some ECS
 
 # okay i lied, i need some other stuff as well

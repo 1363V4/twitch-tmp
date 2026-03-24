@@ -1,11 +1,3 @@
-# VIDEO
-
-
-
-
-
-
-
 # TODO
 
 why do you render every time bro...

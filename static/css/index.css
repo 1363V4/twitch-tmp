@@ -36,7 +36,7 @@ body {
     background: var(--black);
     font-family: "firacode", system-ui;
     font-family: "slkscr", system-ui;
-    /* cursor: url("/static/img/smol.png"), auto; */
+    /*cursor: url("/static/img/smol.png"), auto; */
     cursor: none;
     overflow: hidden;
 }
