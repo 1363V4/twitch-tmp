@@ -49,18 +49,22 @@ from watchfiles import run_process
 # DATABASE
 
 database = {}
-NO_PEOPLE = 10
+NO_PEOPLE = 128
 database_x = array("B", [] * NO_PEOPLE)
 database_y = array("B", [] * NO_PEOPLE)
-database_id = array("B", [] * NO_PEOPLE)
+database_time = array("H", [] * NO_PEOPLE)
 user_id_to_slot = {}
 free_slots = list(range(NO_PEOPLE))
 # we gon do some ECS
+# hmmm... there's two ways to do this it seems
+# if we use array.index(0) on the bool array then ok
+# bookkeeping is hard
 
 # okay i lied, i need some other stuff as well
 relay = Relay()  # for the tick
 fake = Faker()  # for the debug
 refresh_rate = 0.03
+cursor_party_html = ""
 server_stats = ""
 
 # HTML parts
@@ -70,46 +74,44 @@ fragments["head"] = Head(
     Meta({"charset": "UTF-8"}),
     Meta({"name": "viewport", "content": "width=device-width, initial-scale=1"}),
     Title("cursor party"),
-    Link({"rel": "icon", "href": "/static/img/avatar.avif"}),
+    Link({"rel": "icon", "href": "/static/svg/cursor.svg"}),
     Link({"rel": "stylesheet", "href": "/static/css/index.css"}),
-    Script(
-        {
-            "type": "module",
-            # 'src': f"/static/js/datastar.js')}"
-            "src": "https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.8/bundles/datastar.js",
-        }
-    ),
     Script(
         {
             "type": "module",
             "src": "/static/js/index.js",
         }
     ),
+    Script(
+        {
+            "type": "module",
+            "src": "https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.8/bundles/datastar.js",
+        }
+    ),
 )
+
+FPS_METER = Tag("fps-meter")
 
 # VIEWS
 
 
-# a view for the index? really?... i'll fix it later.
-# okay fixed.
-
-
-def index_view(user_id):
+def index_view():
     # if we want to encapsulate
     # WC_Example = Tag("just-flexin", self_closing=True)
     # WC_Example()
     mousetrap = Div(
         {"id": "mousetrap"},
-        {"style": f"transition: translate {2 * refresh_rate}s ease-out"},
+        {"style": f"transition: translate {refresh_rate}s ease-out"},
         *[
             Div(
                 {
                     "class": ["cursor_ai", "gt-s"],
+                    # "data-main-cursor": True,
                     "style": f"translate: {pos[0]}vw {pos[1]}vh;",
                 },
                 Img(
                     {
-                        "src": "/static/img/smol.png",
+                        "src": "/static/svg/cursor.svg",
                     }
                 ),
                 P(user_id),
@@ -127,24 +129,24 @@ def index_view(user_id):
             {"class": ["gc gt-xxl"]},
             H1(
                 "Cursor Party",
-                data.init("fun()"),
                 data.ignore_morph(),
             ),
-            P({"class": "gt-m"}, "Your name is ", Span(user_id)),
+            # P({"class": "gt-m"}, "Your name is ", Span(user_id)),
             # P({"class": "gt-s"}, data.json_signals()),
-            P({"id": "server"}, {"class": "gt-s"}, server_stats),
-            P(
-                {"id": "fps", "class": ["gt-s"]}, "FPS: ", int(1 / refresh_rate)
-            ),  # kind of a lie
-            A(
-                {"href": "/settings"},
-                Img(
-                    {
-                        "id": "wheel",
-                        "src": f"/static/{asset('svg/settings.svg')}",
-                    },
-                ),
-            ),
+            # P({"id": "server"}, {"class": "gt-s"}, server_stats),
+            # P(
+            #     {"id": "fps", "class": ["gt-s"]}, "FPS: ", int(1 / refresh_rate)
+            # ),  # kind of a lie
+            FPS_METER(data.ignore_morph()),
+            # A(
+            #     {"href": "/settings"},
+            #     Img(
+            #         {
+            #             "id": "wheel",
+            #             "src": f"/static/{asset('svg/settings.svg')}",
+            #         },
+            #     ),
+            # ),
             mousetrap,
         ),
     )
@@ -160,9 +162,6 @@ async def index(c: Context, w: Writer):
     if not user_id:
         user_id = fake.name()
         w.cookie("user_id", user_id, httponly=True, secure=True)
-    # if user_id in db, we here just respawn at 0,0
-    # seems like an acceptable behavior
-    database[user_id] = [0, 0]
     return w.html(
         Html(
             {"lang": "en"},
@@ -172,29 +171,29 @@ async def index(c: Context, w: Writer):
                 data.init(at.get("/index_cqrs")),
             ),
         )
-    )  # huh? html twice? -> YES SIR.
-
-
-# what i wonder is: if i don't package with w.html, do i still get compression?
+    )
 
 
 async def index_cqrs(c: Context, w: Writer):
     user_id = c.req.cookies.get("user_id")
+    if not user_id:
+        w.empty()
+        # never too cautious
     if user_id and user_id not in database:
         database[user_id] = [0, 0]
-        # okay that was it
-    # here, w.alive() ends when the SSE connection disconnects
+        # slot = free_slots.pop()
+        # database_x[slot] = 0
+        # database_y[slot] = 0
+        # user_id_to_slot[user_id] = slot
     async for _ in w.alive(relay.subscribe("refresh")):
-        w.patch(index_view(user_id))
-        # debug break
-        # break
-    # maybe that's aggressive... i need to test... yes something wrong
+        w.patch(cursor_party_html)
     if user_id and user_id in database:
         del database[user_id]
+        # slot = user_id_to_slot[user_id]
+        # free_slots.append(slot)
 
 
 async def mouse(c: Context, w: Writer):
-    # careful, data keeps coming when window inactive
     signals = await c.signals()
     data = signals.get("data")
     if data:
@@ -258,6 +257,8 @@ async def code(c, w):
 
 async def refresh(refresh_rate=refresh_rate):
     while True:
+        global cursor_party_html
+        cursor_party_html = index_view()
         relay.publish("refresh", "")
         await asyncio.sleep(refresh_rate)
 

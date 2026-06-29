@@ -61,9 +61,9 @@ span {
     left: 0;
     top: 0;
     color: white;
-    /*we sync with refresh rate*/
-    /*ease out is best*/
-    /*transition: translate 0.05s ease-out;*/
+    img {
+        width: 30px;
+    }
 }
 
 #fps {
@@ -105,4 +105,8 @@ input {
     &:hover {
         color: var(--orange);
     }
+}
+
+fps-meter {
+    color: green;
 }

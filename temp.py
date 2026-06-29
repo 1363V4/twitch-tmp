@@ -97,9 +97,35 @@ print(test)
 # print(int("43", 16))
 # print(int("52", 16))
 # print(int("3d", 16))
+# dans l'autre sens
+# print(hex(61))
+# print(int("ff", 16))
+# si on voulait utiliser z
+# print(int("73", 36))
+#
+# import string
+#
+# chars = "".join(str(n) for n in range(10)) + string.ascii_lowercase
+#
+# for base in range(10, 37):
+#     a = 255 // base
+#     b = 255 % base
+#     print(f"{chars[a]}{chars[b]}, base {base}")
 
+# bon ok faut avouer que la base 16 tombe bien
+# base 10 p5, base 12 l3, base 36 73
+#
 # import array
 #
-# for t in array.typecodes + "bB":
+# for t in array.typecodes:
 #     a = array.array(t, [])
 #     print(a, a.itemsize)
+#
+
+import secrets
+
+s = secrets.token_bytes(4)
+print(s)
+
+u5 = array("I", s)
+print(u5)
